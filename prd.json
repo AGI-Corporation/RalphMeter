@@ -110,6 +110,8 @@
         "PoE-LOC = total errors / total LOC",
         "Synth = Cumulative Tokens / Current LOC (snapshot-based, recalculated after each story)",
         "Track Synth trend over time — spikes indicate problem stories",
+        "Track per-story deltas for drill-down: { storyId, tokensSpent, linesAdded, linesDeleted, netDelta, storySynth }",
+        "storySynth = tokensSpent / linesAdded (only when linesAdded > 0)",
         "Verification Rate = vLOC / LOC",
         "formatReport() returns human-readable metrics report string",
         "Typecheck passes",
@@ -117,7 +119,7 @@
       ],
       "priority": 5,
       "passes": false,
-      "notes": "This is where the physical unit emerges: Verified LOC / Energy"
+      "notes": "Cumulative Synth is the headline metric; per-story deltas enable drill-down analysis."
     },
     {
       "id": "US-006",
@@ -333,6 +335,7 @@
         "Methods: register(gate), unregister(id), getApplicable(projectMeta), runAll(artifact)",
         "Support verification modes: 'core' (G1-G3 only), 'strict' (core + all quality), 'custom' (user-selected)",
         "Create src/gates/ directory for built-in quality gate plugins",
+        "Create src/gates/file-size.ts - max LOC per file check (default 500 lines, configurable)",
         "Create src/gates/complexity.ts - cyclomatic complexity check using eslint",
         "Create src/gates/coverage.ts - test coverage threshold check",
         "Create src/gates/security.ts - SAST integration (semgrep/snyk stub)",
