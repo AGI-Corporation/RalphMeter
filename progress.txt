@@ -105,3 +105,20 @@ it passes ALL applicable gates. Dead code and untested code are properly exclude
 
 ---
 
+## 2026-01-30 - US-004
+- Implemented: Metering Core - Gate Tracker (3-gate verification model)
+- Files changed:
+  - Created src/core/gates.ts - GateTracker class with record, getResults, getGateStats, getSessionStats, getLineVerification methods
+  - Created src/core/gates.test.ts - 42 comprehensive tests covering all methods and edge cases
+  - Modified src/core/index.ts - added gates export to barrel
+- **Learnings for future iterations:**
+  - ESLint `@typescript-eslint/array-type` rule requires `T[]` syntax instead of `Array<T>`
+  - ESLint `@typescript-eslint/restrict-template-expressions` requires explicit `String()` for numbers in template literals
+  - Use AND logic when same line is checked multiple times - a line only passes if ALL checks pass
+  - PoE (probability of error) per gate = 1 - passRate
+  - Overall PoE formula: 1 - product(1 - PoE_i) for all applicable gates
+  - A line is verified only when it passes ALL required, non-skipped gates that have checked it
+  - Gate configuration supports: required (affects verification), threshold (pass rate requirement), skip (exclude from PoE calculation)
+
+---
+

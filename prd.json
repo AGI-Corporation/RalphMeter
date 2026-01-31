@@ -96,7 +96,7 @@
         "Tests pass in src/core/gates.test.ts"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "3-gate model with line-level verification. G1=compile errors, G2=test coverage, G3=runtime coverage."
     },
     {
