@@ -42,7 +42,7 @@
         "Tests pass in src/core/events.test.ts"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Foundation for all metering. Events are the raw signal."
     },
     {

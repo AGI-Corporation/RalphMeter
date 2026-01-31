@@ -9,6 +9,7 @@
 - Prettier config: semi, single quotes, es5 trailing commas
 - tsconfig has `noUncheckedIndexedAccess: true` - handle undefined on indexed access
 - Tests are co-located with source files as `*.test.ts`
+- Zod 4 APIs: use `z.uuid()`, `z.iso.datetime()`, `z.core.$ZodIssue` (not deprecated string-based methods)
 
 ## Project Initialized
 Date: 2026-01-30
@@ -55,6 +56,23 @@ it passes ALL applicable gates. Dead code and untested code are properly exclude
   - The `throw` in `unwrap()` must throw Error instances for ESLint rules
   - Directory structure matches planned architecture for all future stories
   - All directories created: core, api, cli, integrations, benchmarks, export, explorer, gates
+
+---
+
+## 2026-01-30 - US-001
+- Implemented: Metering Core - Event Schema
+- Files changed:
+  - Created src/core/events.ts - Zod schemas for all event types
+  - Created src/core/events.test.ts - 36 comprehensive tests
+  - Created src/core/index.ts - core module barrel export
+  - Modified src/types/index.ts - re-export event types
+  - Modified src/schemas/index.ts - re-export event schemas and validation functions
+- **Learnings for future iterations:**
+  - Zod 4 uses new APIs: `z.uuid()` instead of `z.string().uuid()`, `z.iso.datetime()` instead of `z.string().datetime()`
+  - Use `z.core.$ZodIssue` instead of `z.ZodIssue` for type references in Zod 4
+  - Use `z.discriminatedUnion()` for event type unions - better error messages and performance
+  - Always add explicit return types to helper functions in test files (ESLint requirement)
+  - The Result<T, E> pattern works well with Zod's safeParse - map success/error to ok/err
 
 ---
 
