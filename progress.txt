@@ -1,0 +1,19 @@
+# RalphMeter Progress Log
+
+## Project Initialized
+Date: 2026-01-30
+Description: RalphMeter - A metering, transparency, and benchmarking layer for AI coding agents.
+
+The goal: Define the physical unit for AI code synthesis energy.
+- Input: PRD (intent)
+- Output: Verified Application (LOC that passes all gates)
+- Measure: Verified LOC per Joule/Token/Dollar
+
+Core concepts:
+- 4-Gate Model: Compile → Run → Integrate → Verify
+- PoE-LOC-M: Probability of Error per Line of Code per Minute
+- Verified LOC: Code that passes all 4 gates
+- Efficiency: Verified LOC / Energy spent
+
+---
+

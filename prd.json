@@ -1,0 +1,295 @@
+{
+  "project": "RalphMeter",
+  "branchName": "ralph/initial-build",
+  "description": "A metering, transparency, and benchmarking layer for AI coding agents. Measures energy efficiency in Verified LOC per unit cost, providing the physical unit for AI code synthesis.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Metering Core - Event Schema",
+      "description": "Define the core event schema for capturing agent activity using Zod validation.",
+      "acceptanceCriteria": [
+        "Create src/core/events.ts with Zod schemas for: session_start, session_end, iteration_start, iteration_end, tokens_in, tokens_out, compilation_result, test_result, story_complete",
+        "Each event has timestamp (ISO string), sessionId (UUID), eventType, and type-specific payload",
+        "Export validateEvent() and safeValidateEvent() functions",
+        "Export TypeScript types for all event types",
+        "Typecheck passes",
+        "Tests pass in src/core/events.test.ts"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Foundation for all metering. Events are the raw signal."
+    },
+    {
+      "id": "US-002",
+      "title": "Metering Core - Event Collector",
+      "description": "Create EventCollector class that receives, validates, and stores events in memory.",
+      "acceptanceCriteria": [
+        "Create src/core/collector.ts with EventCollector class",
+        "Methods: emit(event), getSession(id), getAllSessions(), getMetrics(sessionId)",
+        "Auto-create session on session_start event",
+        "Update session status on session_end event",
+        "Calculate basic metrics: totalIterations, totalTokensIn, totalTokensOut, compilationAttempts/Successes, testAttempts/Successes",
+        "Typecheck passes",
+        "Tests pass in src/core/collector.test.ts"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "In-memory first, SQLite persistence can come later."
+    },
+    {
+      "id": "US-003",
+      "title": "Metering Core - LOC Counter",
+      "description": "Create LOC counter that analyzes code files and categorizes lines.",
+      "acceptanceCriteria": [
+        "Create src/core/loc.ts with LOCCounter class",
+        "Methods: detectLanguage(filePath), countLines(content, language), countFile(path, content), aggregate(results[])",
+        "Support TypeScript, JavaScript, Python comment styles",
+        "Return { total, code, comments, blank } breakdown",
+        "Typecheck passes",
+        "Tests pass in src/core/loc.test.ts"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "LOC is the tangible output metric we anchor everything to."
+    },
+    {
+      "id": "US-004",
+      "title": "Metering Core - Gate Tracker",
+      "description": "Implement the 4-gate verification model tracker.",
+      "acceptanceCriteria": [
+        "Create src/core/gates.ts with GateTracker class",
+        "Define Gate type: G1_COMPILE, G2_RUN, G3_REACHABLE, G4_CORRECT",
+        "Methods: record(sessionId, result), getResults(sessionId), getGateStats(sessionId, gate), getSessionStats(sessionId)",
+        "Calculate per-gate: attempts, passes, failures, passRate, poe (probability of error)",
+        "Calculate verifiedIterations (iterations where all 4 gates pass)",
+        "Calculate overallPoE using: 1 - ∏(1 - PoE_i)",
+        "Typecheck passes",
+        "Tests pass in src/core/gates.test.ts"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "The 4-gate model is core to verification. PoE is the error signal."
+    },
+    {
+      "id": "US-005",
+      "title": "Metrics Calculator",
+      "description": "Create MetricsCalculator that computes the headline efficiency metrics.",
+      "acceptanceCriteria": [
+        "Create src/core/metrics.ts with MetricsCalculator class",
+        "Constructor takes EventCollector, GateTracker, LOCCounter",
+        "calculate() returns: verifiedLOC, verificationRate, locPerIteration, locPerToken, tokensPerLOC, poeLOCM, totalMinutes, locPerMinute, efficiency",
+        "PoE-LOC-M = (total errors / total LOC) / minutes",
+        "Efficiency = Verified LOC / Total Tokens",
+        "formatReport() returns human-readable metrics report string",
+        "Typecheck passes",
+        "Tests pass in src/core/metrics.test.ts"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "This is where the physical unit emerges: Verified LOC / Energy"
+    },
+    {
+      "id": "US-006",
+      "title": "REST API - Core Endpoints",
+      "description": "Create Express REST API for metering data.",
+      "acceptanceCriteria": [
+        "Create src/api/server.ts with Express app",
+        "POST /api/sessions - create new session (returns sessionId)",
+        "POST /api/sessions/:id/events - emit event to session",
+        "GET /api/sessions - list all sessions",
+        "GET /api/sessions/:id - get session details",
+        "GET /api/sessions/:id/metrics - get calculated metrics",
+        "Request validation using Zod",
+        "Error handling middleware with proper status codes",
+        "Typecheck passes",
+        "Tests pass using supertest"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "API enables external tools to send events and read metrics."
+    },
+    {
+      "id": "US-007",
+      "title": "Ralph Integration - Hook System",
+      "description": "Create hook system that can be injected into Ralph's loop.",
+      "acceptanceCriteria": [
+        "Create src/integrations/ralph-hooks.ts",
+        "Export createRalphHooks(meterUrl) factory function",
+        "Hooks for: onSessionStart, onIterationStart, onIterationEnd, onCompilation, onTestRun, onStoryComplete, onSessionEnd",
+        "Each hook sends appropriate event to RalphMeter API",
+        "Include example ralph.sh modifications in README",
+        "Typecheck passes",
+        "Include integration test with mock server"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "This is how Ralph feeds data into the meter."
+    },
+    {
+      "id": "US-008",
+      "title": "CLI Tool - Basic Commands",
+      "description": "Create CLI for starting server and viewing metrics.",
+      "acceptanceCriteria": [
+        "Create src/cli/index.ts as CLI entry point",
+        "Use commander.js for argument parsing",
+        "Command: ralphmeter start [--port 3333] - launch the API server",
+        "Command: ralphmeter status - show running sessions summary",
+        "Command: ralphmeter report <sessionId> - print full metrics report",
+        "Add bin entry to package.json",
+        "Typecheck passes",
+        "CLI --help works for all commands"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "CLI is the primary interface for local use."
+    },
+    {
+      "id": "US-009",
+      "title": "Benchmark Suite - Reference PRDs",
+      "description": "Create reference PRDs with known complexity for calibration.",
+      "acceptanceCriteria": [
+        "Create src/benchmarks/references/ directory",
+        "Create 3 reference PRDs in Ralph prd.json format: hello-api.json (~50 LOC, trivial), todo-crud.json (~200 LOC, medium), auth-flow.json (~500 LOC, complex)",
+        "Each PRD includes metadata: expectedLOC (range), complexityScore (1-10), expectedIterations (range)",
+        "Create src/benchmarks/types.ts with Benchmark interface",
+        "Create src/benchmarks/loader.ts to load and validate benchmark PRDs",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "Benchmarks provide calibration points for efficiency comparisons."
+    },
+    {
+      "id": "US-010",
+      "title": "Benchmark Suite - Comparison Engine",
+      "description": "Create engine to compare session metrics against benchmarks.",
+      "acceptanceCriteria": [
+        "Create src/benchmarks/comparison.ts with BenchmarkComparison class",
+        "compare(sessionId, benchmarkId) method",
+        "Calculate efficiency ratio: actual efficiency / expected efficiency",
+        "Generate report with: benchmark name, expected vs actual LOC, expected vs actual iterations, efficiency score, pass/fail, recommendations",
+        "Typecheck passes",
+        "Tests pass with mock data"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "Comparison gives meaning to raw metrics via calibration."
+    },
+    {
+      "id": "US-011",
+      "title": "Export - Open Metrics Format",
+      "description": "Create standardized export format for metrics interchange.",
+      "acceptanceCriteria": [
+        "Create src/export/format.ts with RalphMeterExport interface",
+        "Format includes: version (v1), sessionMetadata, allEvents, computedMetrics, gateHistory, locBreakdown",
+        "Create src/export/exporter.ts with exportSession(sessionId) function",
+        "Add GET /api/sessions/:id/export endpoint",
+        "Include JSON schema file at src/export/schema.json",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": "Open format enables ecosystem tooling and comparisons."
+    },
+    {
+      "id": "US-012",
+      "title": "AI Explorer - Coverage Instrumentation",
+      "description": "Create instrumented app runner that captures runtime coverage during AI exploration.",
+      "acceptanceCriteria": [
+        "Create src/explorer/coverage.ts with CoverageCollector class",
+        "Method: startInstrumented(appCommand, options) - starts app with V8/c8 coverage",
+        "Method: stopAndCollect() - returns per-line coverage data",
+        "Support Node.js apps with c8 instrumentation",
+        "Return { executed: Line[], notExecuted: Line[] } with file paths and line numbers",
+        "Typecheck passes",
+        "Tests pass with sample app"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "Foundation for G3 reachability via actual runtime execution."
+    },
+    {
+      "id": "US-013",
+      "title": "AI Explorer - Surface Explorer",
+      "description": "Create AI-driven exploration that exercises all app surfaces.",
+      "acceptanceCriteria": [
+        "Create src/explorer/surface.ts with SurfaceExplorer class",
+        "Integration with Playwright for browser automation",
+        "Method: explore(baseUrl, options) - AI explores all visible UI surfaces",
+        "Clicks buttons, fills forms, navigates links, triggers interactions",
+        "Records HTTP responses including status codes",
+        "Returns exploration log with: urls visited, actions taken, responses received",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": "AI explores every surface to prove reachability, not just test paths."
+    },
+    {
+      "id": "US-014",
+      "title": "AI Explorer - Auth Barrier Detection",
+      "description": "Track authentication and authorization barriers during exploration.",
+      "acceptanceCriteria": [
+        "Create src/explorer/barriers.ts with BarrierTracker class",
+        "Detect and categorize: 401 (unauthenticated), 403 (forbidden), 402 (payment required)",
+        "Track which URLs/paths are blocked by each barrier type",
+        "Infer which code paths are behind auth barriers",
+        "Return { authGated: Line[], permissionGated: Line[], paywallGated: Line[] }",
+        "Do NOT flag auth-gated code as dead/unreachable",
+        "Typecheck passes",
+        "Tests pass with mock 401/403 responses"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "Prevents false positives - code behind auth is not dead code."
+    },
+    {
+      "id": "US-015",
+      "title": "AI Explorer - Exploration Modes",
+      "description": "Support different auth levels for comprehensive exploration.",
+      "acceptanceCriteria": [
+        "Add exploration modes: anonymous, authenticated, privileged, full",
+        "Anonymous: no credentials, tracks all auth barriers",
+        "Authenticated: uses provided user credentials",
+        "Privileged: uses provided admin credentials",
+        "Full: runs all modes sequentially, merges coverage",
+        "Credentials passed via config or environment variables",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "Different modes unlock different code paths for verification."
+    },
+    {
+      "id": "US-016",
+      "title": "G3 Reachability Report",
+      "description": "Generate comprehensive reachability report from AI exploration.",
+      "acceptanceCriteria": [
+        "Create src/explorer/report.ts with ReachabilityReport class",
+        "Combine coverage data + barrier detection into unified report",
+        "Categories: exercised (G3 pass), authGated (unknown), permissionGated (unknown), unreached (G3 fail)",
+        "Calculate percentages for each category",
+        "Generate actionable recommendations: 'Provide auth to verify X more LOC'",
+        "Add GET /api/sessions/:id/reachability endpoint",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": "The honest G3 report - not just pass/fail, but WHY."
+    },
+    {
+      "id": "US-017",
+      "title": "Documentation - Complete README",
+      "description": "Write comprehensive documentation.",
+      "acceptanceCriteria": [
+        "Update README.md with: project vision (physical energy concept), the 4-gate model explanation, quick start guide, API reference, CLI reference, Ralph integration guide, metric definitions (PoE-LOC-M, Verified LOC, Efficiency), AI Explorer guide, contributing guide for benchmark PRDs",
+        "Include architecture diagram reference to image.png",
+        "Add CONTRIBUTING.md with benchmark PRD submission guidelines",
+        "Typecheck passes (for any code examples)"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": "Documentation makes the project usable and the concepts clear."
+    }
+  ]
+}
