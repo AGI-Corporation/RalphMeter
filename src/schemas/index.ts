@@ -6,6 +6,19 @@
  * and re-exported here for public API access.
  */
 
-// Placeholder export to ensure this is a valid module
-// Re-export schemas from feature modules (will be populated as features are added)
-export {};
+// Re-export event schemas
+export {
+  SessionStartEventSchema,
+  SessionEndEventSchema,
+  IterationStartEventSchema,
+  IterationEndEventSchema,
+  TokensInEventSchema,
+  TokensOutEventSchema,
+  CompilationResultEventSchema,
+  TestResultEventSchema,
+  StoryCompleteEventSchema,
+  MeterEventSchema,
+} from '../core/events.js';
+
+// Re-export validation functions
+export { validateEvent, safeValidateEvent } from '../core/events.js';
