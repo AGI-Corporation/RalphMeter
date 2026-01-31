@@ -24,7 +24,7 @@
         "Create an instructions MD file to make sure future contributors understand the architecture and coding standards established."
       ],
       "priority": 0,
-      "passes": false,
+      "passes": true,
       "notes": "Foundation story - must complete before all others. Sets patterns that all subsequent code follows."
     },
     {
@@ -34,6 +34,8 @@
       "acceptanceCriteria": [
         "Create src/core/events.ts with Zod schemas for: session_start, session_end, iteration_start, iteration_end, tokens_in, tokens_out, compilation_result, test_result, story_complete",
         "Each event has timestamp (ISO string), sessionId (UUID), eventType, and type-specific payload",
+        "session_start includes optional tags field: Record<string, string> for arbitrary metadata (mode, methodology, A/B tests, etc.)",
+        "iteration_start and iteration_end include storyId field to track which story the iteration targets",
         "Export validateEvent() and safeValidateEvent() functions",
         "Export TypeScript types for all event types",
         "Typecheck passes",
@@ -66,7 +68,8 @@
       "description": "Create LOC counter that analyzes code files and categorizes lines.",
       "acceptanceCriteria": [
         "Create src/core/loc.ts with LOCCounter class",
-        "Methods: detectLanguage(filePath), countLines(content, language), countFile(path, content), aggregate(results[])",
+        "Methods: detectLanguage(filePath), countLines(content, language), countFile(path, content), aggregate(results[]), snapshotCodebase(rootPath)",
+        "snapshotCodebase counts all LOC in codebase at a point in time (for cumulative Synth calculation)",
         "Support TypeScript, JavaScript, Python comment styles",
         "Return { total, code, comments, blank } breakdown",
         "Typecheck passes",
@@ -74,25 +77,27 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "LOC is the tangible output metric we anchor everything to."
+      "notes": "LOC is measured as codebase snapshot, not deltas. Synth = cumulative_tokens / current_LOC."
     },
     {
       "id": "US-004",
       "title": "Metering Core - Gate Tracker",
-      "description": "Implement the 4-gate verification model tracker.",
+      "description": "Implement the 3-gate verification model tracker with line-level granularity.",
       "acceptanceCriteria": [
         "Create src/core/gates.ts with GateTracker class",
-        "Define Gate type: G1_COMPILE, G2_CORRECT, G3_RUN, G4_REACHABLE",
-        "Methods: record(sessionId, result), getResults(sessionId), getGateStats(sessionId, gate), getSessionStats(sessionId)",
-        "Calculate per-gate: attempts, passes, failures, passRate, poe (probability of error)",
-        "Calculate verifiedIterations (iterations where all 4 gates pass)",
+        "Define Gate type: G1_COMPILE, G2_CORRECT, G3_REACHABLE",
+        "Each gate tracks verification at line-level: G1 via compiler errors, G2 via test coverage, G3 via runtime coverage",
+        "Methods: record(sessionId, result), getResults(sessionId), getGateStats(sessionId, gate), getSessionStats(sessionId), getLineVerification(sessionId, filePath)",
+        "Support configurable thresholds per gate: { required: boolean, threshold: number (0-1), skip: boolean }",
+        "Calculate per-gate: linesChecked, linesPassed, passRate, poe (probability of error)",
+        "A line is verified only if it passes ALL applicable gates",
         "Calculate overallPoE using: 1 - ∏(1 - PoE_i)",
         "Typecheck passes",
         "Tests pass in src/core/gates.test.ts"
       ],
       "priority": 4,
       "passes": false,
-      "notes": "The 4-gate model is core to verification. PoE is the error signal."
+      "notes": "3-gate model with line-level verification. G1=compile errors, G2=test coverage, G3=runtime coverage."
     },
     {
       "id": "US-005",
@@ -103,7 +108,8 @@
         "Constructor takes EventCollector, GateTracker, LOCCounter",
         "calculate() returns: verifiedLOC, totalLOC, verificationRate (vLOC/LOC), locPerMinute (LOC/M), vlocPerMinute (vLOC/M), tokensPerLOC (Synth), poeLOC, totalMinutes",
         "PoE-LOC = total errors / total LOC",
-        "Synth = Total Tokens / Verified LOC",
+        "Synth = Cumulative Tokens / Current LOC (snapshot-based, recalculated after each story)",
+        "Track Synth trend over time — spikes indicate problem stories",
         "Verification Rate = vLOC / LOC",
         "formatReport() returns human-readable metrics report string",
         "Typecheck passes",
@@ -231,7 +237,7 @@
       ],
       "priority": 12,
       "passes": false,
-      "notes": "Foundation for G4 reachability via actual runtime execution."
+      "notes": "Foundation for G3 reachability via actual runtime execution."
     },
     {
       "id": "US-013",
@@ -287,12 +293,12 @@
     },
     {
       "id": "US-016",
-      "title": "G4 Reachability Report",
+      "title": "G3 Reachability Report",
       "description": "Generate comprehensive reachability report from AI exploration.",
       "acceptanceCriteria": [
         "Create src/explorer/report.ts with ReachabilityReport class",
         "Combine coverage data + barrier detection into unified report",
-        "Categories: exercised (G4 pass), authGated (unknown), permissionGated (unknown), unreached (G4 fail)",
+        "Categories: exercised (G3 pass), authGated (unknown), permissionGated (unknown), unreached (G3 fail)",
         "Calculate percentages for each category",
         "Generate actionable recommendations: 'Provide auth to verify X more LOC'",
         "Add GET /api/sessions/:id/reachability endpoint",
@@ -307,7 +313,7 @@
       "title": "Documentation - Complete README",
       "description": "Write comprehensive documentation.",
       "acceptanceCriteria": [
-        "Update README.md with: project vision (physical energy concept), the 4-gate model explanation, quick start guide, API reference, CLI reference, Ralph integration guide, metric definitions (PoE-LOC, Verified LOC, Synth), AI Explorer guide, contributing guide for benchmark PRDs",
+        "Update README.md with: project vision (physical energy concept), the 3-gate model explanation, quick start guide, API reference, CLI reference, Ralph integration guide, metric definitions (PoE-LOC, Verified LOC, Synth), AI Explorer guide, contributing guide for benchmark PRDs",
         "Include architecture diagram reference to image.png",
         "Add CONTRIBUTING.md with benchmark PRD submission guidelines",
         "Typecheck passes (for any code examples)"
@@ -319,13 +325,13 @@
     {
       "id": "US-018",
       "title": "Pluggable Quality Gates",
-      "description": "Create a plugin architecture for custom quality gates beyond the core G1-G4.",
+      "description": "Create a plugin architecture for custom quality gates beyond the core G1-G3.",
       "acceptanceCriteria": [
         "Create src/core/gate-plugin.ts with Gate interface: id, name, category (core|quality), appliesWhen(), check()",
         "GateResult type with: pass (boolean), score (optional 0-100), findings (optional array)",
         "Create src/core/gate-registry.ts with GateRegistry class",
         "Methods: register(gate), unregister(id), getApplicable(projectMeta), runAll(artifact)",
-        "Support verification modes: 'core' (G1-G4 only), 'strict' (core + all quality), 'custom' (user-selected)",
+        "Support verification modes: 'core' (G1-G3 only), 'strict' (core + all quality), 'custom' (user-selected)",
         "Create src/gates/ directory for built-in quality gate plugins",
         "Create src/gates/complexity.ts - cyclomatic complexity check using eslint",
         "Create src/gates/coverage.ts - test coverage threshold check",

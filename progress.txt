@@ -1,5 +1,15 @@
 # RalphMeter Progress Log
 
+## Codebase Patterns
+- Use barrel exports (index.ts) for all directories' public APIs
+- Use `.js` extension in all imports (ESM requirement)
+- Use `Result<T, E>` type from `src/shared/result.ts` for fallible operations instead of throwing
+- Export types from `src/types/index.ts`, schemas from `src/schemas/index.ts`
+- ESLint is configured with strict TypeScript rules; run `npm run lint:fix` for auto-fixes
+- Prettier config: semi, single quotes, es5 trailing commas
+- tsconfig has `noUncheckedIndexedAccess: true` - handle undefined on indexed access
+- Tests are co-located with source files as `*.test.ts`
+
 ## Project Initialized
 Date: 2026-01-30
 Description: RalphMeter - A metering, transparency, and benchmarking layer for AI coding agents.
@@ -10,15 +20,41 @@ The goal: Define the physical unit for AI code synthesis energy.
 - Measure: Tokens per Synth (cost of synthesis)
 
 Core concepts:
-- **Synth**: Tokens spent per Verified LOC within a Ralph story (lower is better)
+- **Synth**: Cumulative Tokens / Current LOC (lower is better)
 - Stories are the verification boundary — passes: true/false
-- When a story passes, Synth = Total Tokens / Verified LOC for that story
-- 4-Gate Model: Compile → Run → Reachable (AI-explored) → Correct (tests pass)
+- 3-Gate Model with line-level verification:
+  - G1 Compile: errors point to specific lines
+  - G2 Correct: test coverage maps to lines
+  - G3 Reachable: runtime coverage shows executed lines
+- Configurable thresholds determine story success
 - PoE-LOC: Probability of Error per Line of Code
-- Example: Story US-003 passes with 85 vLOC using 4,250 tokens = 50 Synths
 
-Key insight: A line can only be verified as part of the whole app, but G3 (reachability) 
-can be measured per-line via AI exploration with coverage instrumentation.
+Key insight: Each gate provides line-level granularity. A line is verified only when
+it passes ALL applicable gates. Dead code and untested code are properly excluded.
+
+---
+
+## 2026-01-30 - US-000
+- Implemented: Architecture Foundation - project structure, types, code quality tooling
+- Files changed:
+  - Created src/types/index.ts - centralized type exports barrel
+  - Created src/schemas/index.ts - centralized Zod schema exports barrel
+  - Created src/shared/result.ts - Result<T, E> error handling pattern
+  - Created src/shared/index.ts - shared utilities barrel
+  - Created src/index.ts - main entry point
+  - Created eslint.config.js - ESLint 9 flat config with @typescript-eslint strict rules
+  - Created .prettierrc - Prettier config (semi, singleQuote, es5 trailing comma)
+  - Created .prettierignore - Prettier ignore patterns
+  - Created .editorconfig - Editor configuration
+  - Created ARCHITECTURE.md - Coding standards documentation
+  - Modified tsconfig.json - Added noUncheckedIndexedAccess and other strict options
+  - Modified package.json - Added format/lint scripts and dependencies
+- **Learnings for future iterations:**
+  - ESLint 9 uses flat config format (eslint.config.js), not .eslintrc
+  - Empty barrel files need `export {}` to be valid modules
+  - The `throw` in `unwrap()` must throw Error instances for ESLint rules
+  - Directory structure matches planned architecture for all future stories
+  - All directories created: core, api, cli, integrations, benchmarks, export, explorer, gates
 
 ---
 
