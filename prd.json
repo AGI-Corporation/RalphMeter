@@ -76,7 +76,7 @@
         "Tests pass in src/core/loc.test.ts"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "LOC is measured as codebase snapshot, not deltas. Synth = cumulative_tokens / current_LOC."
     },
     {

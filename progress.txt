@@ -90,3 +90,18 @@ it passes ALL applicable gates. Dead code and untested code are properly exclude
 
 ---
 
+## 2026-01-30 - US-003
+- Implemented: Metering Core - LOC Counter
+- Files changed:
+  - Created src/core/loc.ts - LOCCounter class with detectLanguage, countLines, countFile, aggregate, snapshotCodebase methods
+  - Created src/core/loc.test.ts - 54 comprehensive tests covering all methods and edge cases
+  - Modified src/core/index.ts - added loc export to barrel
+- **Learnings for future iterations:**
+  - With `@typescript-eslint/strict-boolean-expressions`, check nullable strings explicitly: `str !== null` instead of just `str`
+  - Template literal strings ending with a newline character include that as an extra empty line when split
+  - TypeScript/JavaScript comment detection: handle block comments that start and end on same line, inline line comments, multi-line block comments
+  - Python uses `#` for line comments and `"""` for docstrings (treated as block comments)
+  - snapshotCodebase skips common non-source directories (node_modules, .git, dist, etc.) and only includes supported file extensions
+
+---
+
