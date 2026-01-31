@@ -8,3 +8,4 @@ export * from './events.js';
 export * from './collector.js';
 export * from './loc.js';
 export * from './gates.js';
+export * from './metrics.js';
