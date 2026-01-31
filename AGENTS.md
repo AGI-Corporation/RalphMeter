@@ -7,21 +7,57 @@ RalphMeter is a metering and transparency layer for AI coding agents. It measure
 ## Key Concepts
 
 ### The 4-Gate Verification Model
-1. **G1 - Compiles**: Syntax valid, types check (`tsc --noEmit`)
-2. **G2 - Runs**: App starts without crash
-3. **G3 - Reachable**: Code path exercised via AI exploration (not just test coverage)
-4. **G4 - Correct**: Tests pass
 
-### G3 Reachability - The AI Explorer Approach
-G3 is NOT test coverage. It's **actual runtime reachability from the app**.
+Gates are **progressive** — not all gates apply to all project types.
+
+| Gate | Name | Check | Applies When |
+|------|------|-------|--------------|
+| **G1** | Compiles | Syntax valid, types check | Always |
+| **G2** | Correct | Tests pass | Has tests/specs |
+| **G3** | Runs | Starts without crash | Has entry point |
+| **G4** | Reachable | Code paths exercised | Has explorable surface |
+
+#### Gate Applicability by Project Type
+
+| Project Type | G1 | G2 | G3 | G4 |
+|--------------|----|----|----|----|
+| Library (no tests) | ✓ | — | — | — |
+| Library (with tests) | ✓ | ✓ | — | — |
+| CLI tool | ✓ | ✓ | ✓ | — |
+| Web app / API | ✓ | ✓ | ✓ | ✓ |
+
+### What is Verified LOC (vLOC)?
+
+A line of code is **verified** when it passes ALL applicable gates:
+
+```
+Line 42: validateUser(input)
+
+G1 ✓ Compiles     → TypeScript accepts it
+G2 ✓ Correct      → Tests cover this line and tests 
+                    covering this line pass
+G3 ✓ Runs         → App starts, no crash
+G4 ✓ Reachable    → AI Explorer executed this line
+
+Result: Line 42 is 1 vLOC ✓
+```
+
+**Important**: A single line cannot be verified in isolation. Verification happens at the **story level**:
+- Story passes → all LOC in that story become vLOC
+- Story fails → 0 vLOC (tokens spent, nothing verified)
+
+The gates are checked per-line, but the verification boundary is the story.
+
+### G4 Reachability - The AI Explorer Approach
+G4 is NOT test coverage. It's **actual runtime reachability from the app**.
 
 AI Explorer:
 1. Starts app with coverage instrumentation
 2. AI explores ALL surfaces (clicks, forms, API calls)
 3. Tracks auth barriers (401, 403, 402)
-4. Lines executed = G3 PASS
-5. Lines behind auth = G3 UNKNOWN (not dead, just gated)
-6. Lines never hit = G3 FAIL (truly dead code)
+4. Lines executed = G4 PASS
+5. Lines behind auth = G4 UNKNOWN (not dead, just gated)
+6. Lines never hit = G4 FAIL (truly dead code)
 
 ### Reachability Categories
 - **Exercised**: Lines proven reachable by AI exploration
@@ -31,10 +67,23 @@ AI Explorer:
 - **Unreached**: No barrier, but never executed = dead code
 
 ### Core Metrics
-- **Verified LOC**: Lines of code where all 4 gates pass
-- **PoE-LOC-M**: Probability of Error per LOC per Minute
-- **Efficiency**: Verified LOC / Total Tokens (or Joules, or $)
-- **Tokens/vLOC**: Cost in tokens per verified line (lower is better)
+- **Synth**: Tokens per Verified LOC (lower is better) — the cost of synthesis
+- **Verified LOC**: Lines of code where all applicable gates pass
+- **vLOC/M**: Verified LOC per Minute — effective productivity
+- **LOC/M**: Total LOC per Minute — raw output speed
+- **Verification Rate**: vLOC / LOC — how much survives the gates
+- **PoE-LOC**: Probability of Error per LOC
+- Example: 85 vLOC produced with 4,250 tokens = 50 Synths (50 tokens per verified line)
+
+### Synth Calculation (Per Story)
+```
+Story: US-003 (passes: true)
+├── Iterations to complete: 2
+├── Total tokens spent: 4,250
+├── Verified LOC produced: 85
+└── Synths = 4,250 / 85 = 50
+```
+Stories are the verification boundary. A passing story mints its Synth score.
 
 ### Architecture
 ```
@@ -47,7 +96,7 @@ AI Explorer:
 ├─────────────────────────────────────────────┤
 │          Metering Layer                     │
 ├─────────────────────────────────────────────┤
-│          AI Explorer (G3)                   │
+│          AI Explorer (G4)                   │
 │   Playwright + Coverage + Auth Barriers     │
 ├─────────────────────────────────────────────┤
 │             Ralph (or any agent)            │

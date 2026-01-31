@@ -4,6 +4,30 @@
   "description": "A metering, transparency, and benchmarking layer for AI coding agents. Measures energy efficiency in Verified LOC per unit cost, providing the physical unit for AI code synthesis.",
   "userStories": [
     {
+      "id": "US-000",
+      "title": "Architecture Foundation",
+      "description": "Establish project structure, shared types, and code quality tooling before any feature development.",
+      "acceptanceCriteria": [
+        "Create src/types/index.ts as centralized type exports barrel",
+        "Create src/schemas/index.ts for shared Zod schemas (re-exported from feature modules)",
+        "Configure ESLint with @typescript-eslint, strict rules, no-unused-vars error",
+        "Configure Prettier with consistent style (semi: true, singleQuote: true, trailingComma: 'es5')",
+        "tsconfig.json strict mode enabled (strict: true, noUncheckedIndexedAccess: true)",
+        "All modules use barrel exports (index.ts) for public API",
+        "Create src/shared/result.ts with Result<T, E> type for error handling pattern",
+        "Add .editorconfig for consistent formatting across editors",
+        "npm run lint and npm run format scripts in package.json",
+        "Typecheck passes with zero errors",
+        "Lint passes with zero errors",
+        "Latest dependencies installed",
+        "No vulnerabilities in npm audit",
+        "Create an instructions MD file to make sure future contributors understand the architecture and coding standards established."
+      ],
+      "priority": 0,
+      "passes": false,
+      "notes": "Foundation story - must complete before all others. Sets patterns that all subsequent code follows."
+    },
+    {
       "id": "US-001",
       "title": "Metering Core - Event Schema",
       "description": "Define the core event schema for capturing agent activity using Zod validation.",
@@ -58,7 +82,7 @@
       "description": "Implement the 4-gate verification model tracker.",
       "acceptanceCriteria": [
         "Create src/core/gates.ts with GateTracker class",
-        "Define Gate type: G1_COMPILE, G2_RUN, G3_REACHABLE, G4_CORRECT",
+        "Define Gate type: G1_COMPILE, G2_CORRECT, G3_RUN, G4_REACHABLE",
         "Methods: record(sessionId, result), getResults(sessionId), getGateStats(sessionId, gate), getSessionStats(sessionId)",
         "Calculate per-gate: attempts, passes, failures, passRate, poe (probability of error)",
         "Calculate verifiedIterations (iterations where all 4 gates pass)",
@@ -77,9 +101,10 @@
       "acceptanceCriteria": [
         "Create src/core/metrics.ts with MetricsCalculator class",
         "Constructor takes EventCollector, GateTracker, LOCCounter",
-        "calculate() returns: verifiedLOC, verificationRate, locPerIteration, locPerToken, tokensPerLOC, poeLOCM, totalMinutes, locPerMinute, efficiency",
-        "PoE-LOC-M = (total errors / total LOC) / minutes",
-        "Efficiency = Verified LOC / Total Tokens",
+        "calculate() returns: verifiedLOC, totalLOC, verificationRate (vLOC/LOC), locPerMinute (LOC/M), vlocPerMinute (vLOC/M), tokensPerLOC (Synth), poeLOC, totalMinutes",
+        "PoE-LOC = total errors / total LOC",
+        "Synth = Total Tokens / Verified LOC",
+        "Verification Rate = vLOC / LOC",
         "formatReport() returns human-readable metrics report string",
         "Typecheck passes",
         "Tests pass in src/core/metrics.test.ts"
@@ -206,7 +231,7 @@
       ],
       "priority": 12,
       "passes": false,
-      "notes": "Foundation for G3 reachability via actual runtime execution."
+      "notes": "Foundation for G4 reachability via actual runtime execution."
     },
     {
       "id": "US-013",
@@ -262,12 +287,12 @@
     },
     {
       "id": "US-016",
-      "title": "G3 Reachability Report",
+      "title": "G4 Reachability Report",
       "description": "Generate comprehensive reachability report from AI exploration.",
       "acceptanceCriteria": [
         "Create src/explorer/report.ts with ReachabilityReport class",
         "Combine coverage data + barrier detection into unified report",
-        "Categories: exercised (G3 pass), authGated (unknown), permissionGated (unknown), unreached (G3 fail)",
+        "Categories: exercised (G4 pass), authGated (unknown), permissionGated (unknown), unreached (G4 fail)",
         "Calculate percentages for each category",
         "Generate actionable recommendations: 'Provide auth to verify X more LOC'",
         "Add GET /api/sessions/:id/reachability endpoint",
@@ -282,7 +307,7 @@
       "title": "Documentation - Complete README",
       "description": "Write comprehensive documentation.",
       "acceptanceCriteria": [
-        "Update README.md with: project vision (physical energy concept), the 4-gate model explanation, quick start guide, API reference, CLI reference, Ralph integration guide, metric definitions (PoE-LOC-M, Verified LOC, Efficiency), AI Explorer guide, contributing guide for benchmark PRDs",
+        "Update README.md with: project vision (physical energy concept), the 4-gate model explanation, quick start guide, API reference, CLI reference, Ralph integration guide, metric definitions (PoE-LOC, Verified LOC, Synth), AI Explorer guide, contributing guide for benchmark PRDs",
         "Include architecture diagram reference to image.png",
         "Add CONTRIBUTING.md with benchmark PRD submission guidelines",
         "Typecheck passes (for any code examples)"
@@ -290,6 +315,29 @@
       "priority": 17,
       "passes": false,
       "notes": "Documentation makes the project usable and the concepts clear."
+    },
+    {
+      "id": "US-018",
+      "title": "Pluggable Quality Gates",
+      "description": "Create a plugin architecture for custom quality gates beyond the core G1-G4.",
+      "acceptanceCriteria": [
+        "Create src/core/gate-plugin.ts with Gate interface: id, name, category (core|quality), appliesWhen(), check()",
+        "GateResult type with: pass (boolean), score (optional 0-100), findings (optional array)",
+        "Create src/core/gate-registry.ts with GateRegistry class",
+        "Methods: register(gate), unregister(id), getApplicable(projectMeta), runAll(artifact)",
+        "Support verification modes: 'core' (G1-G4 only), 'strict' (core + all quality), 'custom' (user-selected)",
+        "Create src/gates/ directory for built-in quality gate plugins",
+        "Create src/gates/complexity.ts - cyclomatic complexity check using eslint",
+        "Create src/gates/coverage.ts - test coverage threshold check",
+        "Create src/gates/security.ts - SAST integration (semgrep/snyk stub)",
+        "Configuration via ralphmeter.config.yaml or API",
+        "Update MetricsCalculator to report vLOC per verification mode",
+        "Typecheck passes",
+        "Tests pass in src/core/gate-plugin.test.ts"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": "Quality gates are optional but enable stricter verification. vLOC meaning depends on which gates you require."
     }
   ]
 }

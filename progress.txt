@@ -7,13 +7,18 @@ Description: RalphMeter - A metering, transparency, and benchmarking layer for A
 The goal: Define the physical unit for AI code synthesis energy.
 - Input: PRD (intent)
 - Output: Verified Application (LOC that passes all gates)
-- Measure: Verified LOC per Joule/Token/Dollar
+- Measure: Tokens per Synth (cost of synthesis)
 
 Core concepts:
-- 4-Gate Model: Compile → Run → Integrate → Verify
-- PoE-LOC-M: Probability of Error per Line of Code per Minute
-- Verified LOC: Code that passes all 4 gates
-- Efficiency: Verified LOC / Energy spent
+- **Synth**: Tokens spent per Verified LOC within a Ralph story (lower is better)
+- Stories are the verification boundary — passes: true/false
+- When a story passes, Synth = Total Tokens / Verified LOC for that story
+- 4-Gate Model: Compile → Run → Reachable (AI-explored) → Correct (tests pass)
+- PoE-LOC: Probability of Error per Line of Code
+- Example: Story US-003 passes with 85 vLOC using 4,250 tokens = 50 Synths
+
+Key insight: A line can only be verified as part of the whole app, but G3 (reachability) 
+can be measured per-line via AI exploration with coverage instrumentation.
 
 ---
 
