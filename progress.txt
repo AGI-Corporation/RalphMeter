@@ -76,3 +76,17 @@ it passes ALL applicable gates. Dead code and untested code are properly exclude
 
 ---
 
+## 2026-01-30 - US-002
+- Implemented: Metering Core - Event Collector
+- Files changed:
+  - Created src/core/collector.ts - EventCollector class with emit/getSession/getAllSessions/getMetrics methods
+  - Created src/core/collector.test.ts - 35 comprehensive tests covering all methods and edge cases
+  - Modified src/core/index.ts - added collector export to barrel
+- **Learnings for future iterations:**
+  - With `exactOptionalPropertyTypes: true` in tsconfig, conditionally spread optional properties: `...(value !== undefined && { prop: value })`
+  - Use `private sessions = new Map<K, V>()` constructor style instead of `private sessions: Map<K, V> = new Map()` to satisfy @typescript-eslint/consistent-generic-constructors
+  - Session state machine: session_start creates 'active', session_end transitions to 'completed' or 'failed'
+  - Metrics are calculated from iteration_end (count), tokens_in/out (sum), compilation_result/test_result (attempts/successes), story_complete (completed/passed)
+
+---
+

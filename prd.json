@@ -59,7 +59,7 @@
         "Tests pass in src/core/collector.test.ts"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "In-memory first, SQLite persistence can come later."
     },
     {
